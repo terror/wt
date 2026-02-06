@@ -62,7 +62,7 @@ pub(crate) fn run() -> Result {
 
   for (branch, path) in &selected {
     let result = Command::new("git")
-      .args(["worktree", "remove", "--force", path])
+      .args(["worktree", "remove", "--force", "--force", path])
       .stderr(Stdio::piped())
       .output()?;
 
