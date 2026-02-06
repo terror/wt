@@ -8,8 +8,11 @@ pub(crate) struct Create {
 
 impl Create {
   pub(crate) fn run(self) -> Result {
+    let style = Style::stdout();
+
     let root = Command::new("git")
       .args(["rev-parse", "--show-toplevel"])
+      .stderr(Stdio::null())
       .output()?;
 
     let root = Path::new(str::from_utf8(&root.stdout)?.trim());
@@ -18,18 +21,20 @@ impl Create {
       anyhow!("failed to get project name from `{}`", root.display())
     })?;
 
+    let dir_name = format!(
+      "{}.{}",
+      project.to_string_lossy(),
+      self.name.replace('/', "-")
+    );
+
     let worktree = root
       .parent()
       .ok_or_else(|| {
         anyhow!("repo root `{}` has no parent directory", root.display())
       })?
-      .join(format!(
-        "{}.{}",
-        project.to_string_lossy(),
-        self.name.replace('/', "-")
-      ));
+      .join(&dir_name);
 
-    let status = Command::new("git")
+    let output = Command::new("git")
       .args([
         "worktree",
         "add",
@@ -37,11 +42,24 @@ impl Create {
         &self.name,
         &worktree.to_string_lossy(),
       ])
-      .status()?;
+      .stdout(Stdio::null())
+      .stderr(Stdio::piped())
+      .output()?;
 
-    if !status.success() {
-      bail!("failed to create worktree `{}`", self.name);
+    if !output.status.success() {
+      bail!(
+        "failed to create worktree `{}`: {}",
+        self.name,
+        str::from_utf8(&output.stderr)?.trim()
+      );
     }
+
+    println!(
+      "{} worktree {} at {}",
+      style.apply(style::GREEN, "created"),
+      style.apply(style::BOLD, &self.name),
+      style.apply(style::CYAN, &dir_name),
+    );
 
     Ok(())
   }

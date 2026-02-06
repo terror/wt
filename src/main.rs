@@ -3,14 +3,19 @@ use {
   arguments::Arguments,
   clap::Parser,
   std::{
+    env,
+    fmt::{self, Display, Formatter},
+    io::{self, IsTerminal},
     path::Path,
-    process::{self, Command},
+    process::{self, Command, Stdio},
     str,
   },
+  style::Style,
   subcommand::Subcommand,
 };
 
 mod arguments;
+mod style;
 mod subcommand;
 
 type Result<T = (), E = Error> = std::result::Result<T, E>;
