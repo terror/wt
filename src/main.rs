@@ -2,22 +2,25 @@ use {
   anyhow::{Error, anyhow, bail},
   arguments::Arguments,
   clap::Parser,
-  skim::{
-    Skim, SkimItem, SkimItemReceiver, SkimItemSender,
-    options::SkimOptionsBuilder, prelude::unbounded,
-  },
   std::{
-    borrow::Cow,
     env,
     fmt::{self, Display, Formatter},
     io::{self, IsTerminal},
     path::Path,
     process::{self, Command, Stdio},
     str,
-    sync::Arc,
   },
   style::Style,
   subcommand::Subcommand,
+};
+
+#[cfg(unix)]
+use {
+  skim::{
+    Skim, SkimItem, SkimItemReceiver, SkimItemSender,
+    options::SkimOptionsBuilder, prelude::unbounded,
+  },
+  std::{borrow::Cow, sync::Arc},
   worktree::Worktree,
 };
 

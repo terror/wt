@@ -30,6 +30,7 @@ impl TryFrom<&str> for Worktree {
   }
 }
 
+#[cfg(unix)]
 impl SkimItem for Worktree {
   fn output(&self) -> Cow<'_, str> {
     Cow::Borrowed(&self.path)

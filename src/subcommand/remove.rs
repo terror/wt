@@ -1,5 +1,11 @@
 use super::*;
 
+#[cfg(not(unix))]
+pub(crate) fn run() -> Result {
+  bail!("interactive selection is not supported on this platform");
+}
+
+#[cfg(unix)]
 pub(crate) fn run() -> Result {
   let current_dir = env::current_dir()?;
 

@@ -68,6 +68,7 @@ impl Style {
     Self { enabled }
   }
 
+  #[cfg(unix)]
   pub(crate) fn stderr() -> Self {
     Self::new(io::stderr().is_terminal())
   }
