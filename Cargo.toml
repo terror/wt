@@ -1,7 +1,17 @@
 [package]
-name = "wt"
+name = "wt-cli"
 version = "0.1.0"
+authors = ["Liam Scalzulli <liam@scalzulli.com>"]
+categories = ["command-line-utilities"]
+description = "A simple git worktree manager"
 edition = "2024"
+homepage = "https://github.com/terror/wt"
+license = "CC0-1.0"
+repository = "https://github.com/terror/wt"
+
+[[bin]]
+name = "wt"
+path = "src/main.rs"
 
 [lints.clippy]
 all = { level = "deny", priority = -1 }

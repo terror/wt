@@ -20,7 +20,7 @@ check:
 [group: 'check']
 ci: test clippy forbid
   cargo fmt --all -- --check
-  cargo update --locked --package wt
+  cargo update --locked --package wt-cli
 
 [group: 'check']
 clippy:
@@ -40,11 +40,15 @@ forbid:
 
 [group: 'misc']
 install:
-  cargo install -f wt
+  cargo install -f wt-cli
 
 [group: 'dev']
 install-dev-deps:
   cargo install cargo-watch
+
+[group: 'release']
+publish:
+  ./bin/publish
 
 [group: 'release']
 readme:
@@ -57,6 +61,18 @@ run *args:
 [group: 'test']
 test:
   cargo test
+
+[group: 'test']
+test-release-workflow:
+  -git tag -d test-release
+  -git push origin :test-release
+  git tag test-release
+  git push origin test-release
+
+[group: 'release']
+update-changelog:
+  echo >> CHANGELOG.md
+  git log --pretty='format:- %s' >> CHANGELOG.md
 
 [group: 'dev']
 watch +COMMAND='test':
