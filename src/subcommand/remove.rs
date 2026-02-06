@@ -1,4 +1,4 @@
-use {super::*, skim::prelude::*};
+use super::*;
 
 pub(crate) fn run() -> Result {
   let current_dir = env::current_dir()?;
@@ -14,11 +14,11 @@ pub(crate) fn run() -> Result {
     bail!("failed to list worktrees");
   }
 
-  let worktrees: Vec<_> = str::from_utf8(&output.stdout)?
+  let worktrees = str::from_utf8(&output.stdout)?
     .split("\n\n")
-    .filter_map(|block| worktree::Worktree::try_from(block).ok())
+    .filter_map(|block| Worktree::try_from(block).ok())
     .filter(|worktree| Path::new(&worktree.path).is_dir())
-    .collect();
+    .collect::<Vec<_>>();
 
   if worktrees.len() < 2 {
     bail!("no worktrees to remove");
@@ -29,7 +29,7 @@ pub(crate) fn run() -> Result {
   let items = worktrees
     .into_iter()
     .skip(1)
-    .map(|wt| Arc::new(wt) as Arc<dyn SkimItem>)
+    .map(|worktree| Arc::new(worktree) as Arc<dyn SkimItem>)
     .collect::<Vec<Arc<dyn SkimItem>>>();
 
   let options = SkimOptionsBuilder::default()
@@ -50,11 +50,11 @@ pub(crate) fn run() -> Result {
     return Ok(());
   }
 
-  let selected: Vec<_> = output
+  let selected = output
     .selected_items
     .iter()
     .map(|item| (item.text().to_string(), item.output().to_string()))
-    .collect();
+    .collect::<Vec<_>>();
 
   if selected.is_empty() {
     return Ok(());

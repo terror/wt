@@ -9,14 +9,14 @@ pub(crate) struct Worktree {
 impl TryFrom<&str> for Worktree {
   type Error = Error;
 
-  fn try_from(block: &str) -> std::result::Result<Self, Self::Error> {
-    let path = block
+  fn try_from(value: &str) -> std::result::Result<Self, Self::Error> {
+    let path = value
       .lines()
       .find_map(|line| line.strip_prefix("worktree "))
       .ok_or_else(|| anyhow!("missing worktree path"))?
       .to_string();
 
-    let branch = block
+    let branch = value
       .lines()
       .find_map(|line| {
         line

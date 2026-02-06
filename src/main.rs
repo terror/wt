@@ -2,7 +2,10 @@ use {
   anyhow::{Error, anyhow, bail},
   arguments::Arguments,
   clap::Parser,
-  skim::SkimItem,
+  skim::{
+    Skim, SkimItem, SkimItemReceiver, SkimItemSender,
+    options::SkimOptionsBuilder, prelude::unbounded,
+  },
   std::{
     borrow::Cow,
     env,
@@ -11,9 +14,11 @@ use {
     path::Path,
     process::{self, Command, Stdio},
     str,
+    sync::Arc,
   },
   style::Style,
   subcommand::Subcommand,
+  worktree::Worktree,
 };
 
 mod arguments;
