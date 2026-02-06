@@ -54,12 +54,14 @@ impl Create {
       );
     }
 
-    println!(
+    eprintln!(
       "{} worktree {} at {}",
       style.apply(style::GREEN, "created"),
       style.apply(style::BOLD, &self.name),
       style.apply(style::CYAN, &dir_name),
     );
+
+    println!("{}", worktree.display());
 
     Ok(())
   }
