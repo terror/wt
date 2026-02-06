@@ -2,7 +2,9 @@ use {
   anyhow::{Error, anyhow, bail},
   arguments::Arguments,
   clap::Parser,
+  skim::SkimItem,
   std::{
+    borrow::Cow,
     env,
     fmt::{self, Display, Formatter},
     io::{self, IsTerminal},
@@ -17,6 +19,7 @@ use {
 mod arguments;
 mod style;
 mod subcommand;
+mod worktree;
 
 type Result<T = (), E = Error> = std::result::Result<T, E>;
 

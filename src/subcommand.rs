@@ -1,7 +1,8 @@
-use {super::*, create::Create, init::Init, switch::Switch};
+use {super::*, create::Create, init::Init};
 
 mod create;
 mod init;
+mod remove;
 mod switch;
 
 #[derive(Debug, Parser)]
@@ -10,9 +11,10 @@ pub(crate) enum Subcommand {
   Create(Create),
   /// Generate shell integration.
   Init(Init),
+  /// Remove worktrees.
   Remove,
   /// Switch to a different worktree.
-  Switch(Switch),
+  Switch,
 }
 
 impl Subcommand {
@@ -23,8 +25,8 @@ impl Subcommand {
         init.run();
         Ok(())
       }
-      Self::Remove => todo!(),
-      Self::Switch(_) => Switch::run(),
+      Self::Remove => remove::run(),
+      Self::Switch => switch::run(),
     }
   }
 }
