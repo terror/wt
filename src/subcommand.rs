@@ -8,12 +8,15 @@ mod switch;
 #[derive(Debug, Parser)]
 pub(crate) enum Subcommand {
   /// Create a new worktree.
+  #[clap(alias = "c")]
   Create(Create),
   /// Generate shell integration.
   Init(Init),
   /// Remove worktrees.
+  #[clap(alias = "r")]
   Remove,
   /// Switch to a different worktree.
+  #[clap(alias = "s")]
   Switch,
 }
 
