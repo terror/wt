@@ -1,5 +1,12 @@
 use {
-  anyhow::Error, arguments::Arguments, clap::Parser, std::process,
+  anyhow::{Error, anyhow, bail},
+  arguments::Arguments,
+  clap::Parser,
+  std::{
+    path::Path,
+    process::{self, Command},
+    str,
+  },
   subcommand::Subcommand,
 };
 

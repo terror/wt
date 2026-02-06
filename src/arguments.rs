@@ -8,6 +8,6 @@ pub(crate) struct Arguments {
 
 impl Arguments {
   pub(crate) fn run(self) -> Result {
-    Ok(())
+    self.subcommand.run()
   }
 }
