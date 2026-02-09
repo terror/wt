@@ -1,5 +1,38 @@
 use super::*;
 
+fn diff_stat(path: &str) -> (usize, usize) {
+  let output = Command::new("git")
+    .args(["diff", "--numstat"])
+    .current_dir(path)
+    .stderr(Stdio::null())
+    .output()
+    .ok();
+
+  let Some(output) = output.filter(|output| output.status.success()) else {
+    return (0, 0);
+  };
+
+  let stdout = str::from_utf8(&output.stdout).unwrap_or_default();
+
+  stdout
+    .lines()
+    .fold((0, 0), |(insertions, deletions), line| {
+      let mut parts = line.split('\t');
+
+      let added = parts
+        .next()
+        .and_then(|part| part.parse::<usize>().ok())
+        .unwrap_or(0);
+
+      let removed = parts
+        .next()
+        .and_then(|part| part.parse::<usize>().ok())
+        .unwrap_or(0);
+
+      (insertions + added, deletions + removed)
+    })
+}
+
 pub(crate) fn run() -> Result {
   let style = Style::stdout();
 
@@ -24,10 +57,19 @@ pub(crate) fn run() -> Result {
     bail!("no worktrees found");
   }
 
-  let branch_width =
-    worktrees.iter().map(|w| w.branch.len()).max().unwrap_or(0);
+  let stats = worktrees
+    .iter()
+    .map(|w| diff_stat(&w.path))
+    .collect::<Vec<_>>();
 
-  for worktree in &worktrees {
+  let branch_width = worktrees
+    .iter()
+    .map(|worktree| worktree.branch.len())
+    .max()
+    .unwrap_or(0);
+
+  for (worktree, (insertions, deletions)) in worktrees.iter().zip(stats.iter())
+  {
     let is_current = current_dir.starts_with(&worktree.path);
 
     let marker = if is_current {
@@ -36,11 +78,18 @@ pub(crate) fn run() -> Result {
       style.apply(style::GREEN, " ")
     };
 
+    let diff = format!(
+      "{}/{}",
+      style.apply(style::GREEN, format_args!("+{insertions}")),
+      style.apply(style::RED, format_args!("-{deletions}")),
+    );
+
     println!(
-      "{} {:<width$}  {}  {}",
+      "{} {:<width$}  {}  {}  {}",
       marker,
       style.apply(style::BOLD, &worktree.branch),
       style.apply(style::CYAN, &worktree.head),
+      diff,
       worktree.path,
       width = branch_width,
     );
