@@ -1,7 +1,8 @@
-use {super::*, create::Create, init::Init};
+use {super::*, create::Create, hook::Hook, init::Init};
 
 mod convert;
 mod create;
+mod hook;
 mod init;
 mod list;
 mod remove;
@@ -15,6 +16,8 @@ pub(crate) enum Subcommand {
   /// Create a new worktree.
   #[clap(alias = "c")]
   Create(Create),
+  #[clap(hide = true)]
+  Hook(Hook),
   /// Generate shell integration.
   Init(Init),
   /// List all worktrees.
@@ -33,6 +36,7 @@ impl Subcommand {
     match self {
       Self::Convert => convert::run(),
       Self::Create(create) => create.run(),
+      Self::Hook(hook) => hook.run(),
       Self::Init(init) => {
         init.run();
         Ok(())
