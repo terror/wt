@@ -1,5 +1,6 @@
 use {super::*, create::Create, init::Init};
 
+mod convert;
 mod create;
 mod init;
 mod list;
@@ -8,6 +9,9 @@ mod switch;
 
 #[derive(Debug, Parser)]
 pub(crate) enum Subcommand {
+  /// Convert existing branches to worktrees.
+  #[clap(alias = "cv")]
+  Convert,
   /// Create a new worktree.
   #[clap(alias = "c")]
   Create(Create),
@@ -27,6 +31,7 @@ pub(crate) enum Subcommand {
 impl Subcommand {
   pub(crate) fn run(self) -> Result {
     match self {
+      Self::Convert => convert::run(),
       Self::Create(create) => create.run(),
       Self::Init(init) => {
         init.run();
