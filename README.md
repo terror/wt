@@ -11,10 +11,12 @@ Usage: wt <COMMAND>
 Commands:
   create  Create a new worktree
   init    Generate shell integration
+  list    List all worktrees
   remove  Remove worktrees
   switch  Switch to a different worktree
   help    Print this message or the help of the given subcommand(s)
 
 Options:
-  -h, --help  Print help
+  -h, --help     Print help
+  -V, --version  Print version
 ```
