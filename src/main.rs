@@ -12,6 +12,7 @@ use {
   },
   style::Style,
   subcommand::Subcommand,
+  worktree::Worktree,
 };
 
 #[cfg(unix)]
@@ -21,7 +22,6 @@ use {
     options::SkimOptionsBuilder, prelude::unbounded,
   },
   std::{borrow::Cow, sync::Arc},
-  worktree::Worktree,
 };
 
 mod arguments;
