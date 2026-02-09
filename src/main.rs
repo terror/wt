@@ -2,6 +2,8 @@ use {
   anyhow::{Error, anyhow, bail},
   arguments::Arguments,
   clap::Parser,
+  config::Config,
+  serde::{Deserialize, Serialize},
   std::{
     env,
     fmt::{self, Display, Formatter},
@@ -25,6 +27,7 @@ use {
 };
 
 mod arguments;
+mod config;
 mod style;
 mod subcommand;
 mod worktree;
