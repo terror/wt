@@ -69,6 +69,39 @@ Options:
   -V, --version  Print version
 ```
 
+### Shell Integration
+
+To enable shell integration, add the following to your `.zshrc`:
+
+```bash
+eval "$(wt init zsh)"
+```
+
+This defines a `wt` shell function that wraps the `wt` binary. When you run
+`convert`, `create`, `remove`, or `switch`, the shell function automatically
+`cd`s into the resulting worktree directory and executes any configured hooks.
+
+### Hooks
+
+`wt` supports hooks that run after switching to a worktree. Hooks are
+configured in the `wt` config file (typically
+`~/.config/wt/config.toml`):
+
+```toml
+[[hooks.post_worktree_change]]
+command = "direnv reload"
+
+[[hooks.post_worktree_change]]
+command = "nvm use"
+only_if = ".nvmrc"
+```
+
+Each `post_worktree_change` entry has:
+
+- **`command`** — The shell command to run after changing worktrees.
+- **`only_if`** *(optional)* — A glob pattern evaluated relative to the
+  worktree root. The hook only runs if the pattern matches at least one file.
+
 ## Prior Art
 
 I was inspired to build this after using [worktrunk](https://worktrunk.dev/). I
