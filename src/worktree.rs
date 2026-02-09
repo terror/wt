@@ -3,6 +3,7 @@ use super::*;
 #[derive(Debug, Eq, PartialEq)]
 pub(crate) struct Worktree {
   pub(crate) branch: String,
+  pub(crate) head: String,
   pub(crate) path: String,
 }
 
@@ -16,6 +17,14 @@ impl TryFrom<&str> for Worktree {
       .ok_or_else(|| anyhow!("missing worktree path"))?
       .to_string();
 
+    let head = value
+      .lines()
+      .find_map(|line| line.strip_prefix("HEAD "))
+      .map_or_else(
+        || "unknown".to_string(),
+        |h| h[..h.len().min(7)].to_string(),
+      );
+
     let branch = value
       .lines()
       .find_map(|line| {
@@ -26,7 +35,7 @@ impl TryFrom<&str> for Worktree {
       })
       .ok_or_else(|| anyhow!("missing branch"))?;
 
-    Ok(Worktree { branch, path })
+    Ok(Worktree { branch, head, path })
   }
 }
 
@@ -54,6 +63,7 @@ mod tests {
       .unwrap(),
       Worktree {
         branch: "main".to_string(),
+        head: "abc123".to_string(),
         path: "/tmp/repo".to_string(),
       },
     );
@@ -66,6 +76,7 @@ mod tests {
         .unwrap(),
       Worktree {
         branch: "(detached)".to_string(),
+        head: "abc123".to_string(),
         path: "/tmp/repo".to_string(),
       },
     );

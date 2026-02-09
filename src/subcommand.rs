@@ -2,6 +2,7 @@ use {super::*, create::Create, init::Init};
 
 mod create;
 mod init;
+mod list;
 mod remove;
 mod switch;
 
@@ -12,6 +13,9 @@ pub(crate) enum Subcommand {
   Create(Create),
   /// Generate shell integration.
   Init(Init),
+  /// List all worktrees.
+  #[clap(alias = "l")]
+  List,
   /// Remove worktrees.
   #[clap(alias = "r")]
   Remove,
@@ -28,6 +32,7 @@ impl Subcommand {
         init.run();
         Ok(())
       }
+      Self::List => list::run(),
       Self::Remove => remove::run(),
       Self::Switch => switch::run(),
     }

@@ -3,6 +3,7 @@ use super::*;
 pub(crate) const BOLD: &str = "1";
 pub(crate) const CYAN: &str = "36";
 pub(crate) const GREEN: &str = "32";
+pub(crate) const RED: &str = "31";
 
 pub(crate) struct Styled<T> {
   code: &'static str,
