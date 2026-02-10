@@ -7,11 +7,10 @@ use {
   std::{
     env,
     fmt::{self, Display, Formatter},
-    fs,
     io::{self, IsTerminal},
-    path::{Path, PathBuf},
+    path::Path,
     process::{self, Command, Stdio},
-    str, thread,
+    str,
   },
   style::Style,
   subcommand::Subcommand,
@@ -24,7 +23,7 @@ use {
     Skim, SkimItem, SkimItemReceiver, SkimItemSender,
     options::SkimOptionsBuilder, prelude::unbounded,
   },
-  std::{borrow::Cow, sync::Arc},
+  std::{borrow::Cow, fs, path::PathBuf, sync::Arc, thread},
 };
 
 mod arguments;
