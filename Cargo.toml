@@ -1,6 +1,6 @@
 [package]
 name = "wt-cli"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Liam Scalzulli <liam@scalzulli.com>"]
 categories = ["command-line-utilities"]
 description = "A simple git worktree manager"
