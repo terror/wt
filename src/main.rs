@@ -23,7 +23,7 @@ use {
     Skim, SkimItem, SkimItemReceiver, SkimItemSender,
     options::SkimOptionsBuilder, prelude::unbounded,
   },
-  std::{borrow::Cow, sync::Arc},
+  std::{borrow::Cow, fs, path::PathBuf, sync::Arc, thread},
 };
 
 mod arguments;
