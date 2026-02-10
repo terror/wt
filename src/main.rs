@@ -7,6 +7,7 @@ use {
   std::{
     env,
     fmt::{self, Display, Formatter},
+    fs,
     io::{self, IsTerminal},
     path::{Path, PathBuf},
     process::{self, Command, Stdio},

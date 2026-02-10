@@ -15,7 +15,7 @@ fn remove_directories(
       .unwrap_or(worktree_path)
       .join(format!(".wt-removing-{}-{i}", process::id()));
 
-    if std::fs::rename(worktree_path, &trash_path).is_ok() {
+    if fs::rename(worktree_path, &trash_path).is_ok() {
       pending.push(trash_path);
     } else {
       let result = Command::new("git")
@@ -160,7 +160,7 @@ pub(crate) fn run() -> Result {
   std::thread::scope(|scope| {
     for path in &pending_deletes {
       scope.spawn(move || {
-        let _ = std::fs::remove_dir_all(path);
+        let _ = fs::remove_dir_all(path);
       });
     }
   });
