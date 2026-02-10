@@ -1,5 +1,56 @@
 use super::*;
 
+#[cfg(unix)]
+fn remove_directories(
+  selected: &[(String, String)],
+  head_path: &str,
+) -> Result<Vec<PathBuf>> {
+  let mut pending = Vec::new();
+
+  for (i, (branch, path)) in selected.iter().enumerate() {
+    let worktree_path = Path::new(path);
+
+    let trash_path = worktree_path
+      .parent()
+      .unwrap_or(worktree_path)
+      .join(format!(".wt-removing-{}-{i}", process::id()));
+
+    if std::fs::rename(worktree_path, &trash_path).is_ok() {
+      pending.push(trash_path);
+    } else {
+      let result = Command::new("git")
+        .args(["worktree", "remove", "--force", "--force", path])
+        .stderr(Stdio::piped())
+        .output()?;
+
+      if !result.status.success() {
+        bail!(
+          "failed to remove worktree `{}`: {}",
+          branch,
+          str::from_utf8(&result.stderr)?.trim()
+        );
+      }
+    }
+  }
+
+  if !pending.is_empty() {
+    let prune = Command::new("git")
+      .current_dir(head_path)
+      .args(["worktree", "prune"])
+      .stderr(Stdio::piped())
+      .output()?;
+
+    if !prune.status.success() {
+      bail!(
+        "failed to prune worktrees: {}",
+        str::from_utf8(&prune.stderr)?.trim()
+      );
+    }
+  }
+
+  Ok(pending)
+}
+
 #[cfg(not(unix))]
 pub(crate) fn run() -> Result {
   bail!("interactive selection is not supported on this platform");
@@ -66,20 +117,9 @@ pub(crate) fn run() -> Result {
     return Ok(());
   }
 
+  let pending_deletes = remove_directories(&selected, &head_path)?;
+
   for (branch, path) in &selected {
-    let result = Command::new("git")
-      .args(["worktree", "remove", "--force", "--force", path])
-      .stderr(Stdio::piped())
-      .output()?;
-
-    if !result.status.success() {
-      bail!(
-        "failed to remove worktree `{}`: {}",
-        branch,
-        str::from_utf8(&result.stderr)?.trim()
-      );
-    }
-
     eprintln!(
       "{} worktree {} at {}",
       style.apply(style::GREEN, "removed"),
@@ -116,6 +156,14 @@ pub(crate) fn run() -> Result {
   {
     println!("{head_path}");
   }
+
+  std::thread::scope(|scope| {
+    for path in &pending_deletes {
+      scope.spawn(move || {
+        let _ = std::fs::remove_dir_all(path);
+      });
+    }
+  });
 
   Ok(())
 }

@@ -8,7 +8,7 @@ use {
     env,
     fmt::{self, Display, Formatter},
     io::{self, IsTerminal},
-    path::Path,
+    path::{Path, PathBuf},
     process::{self, Command, Stdio},
     str,
   },
