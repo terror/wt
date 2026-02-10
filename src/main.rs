@@ -6,6 +6,7 @@ use {
   serde::{Deserialize, Serialize},
   std::{
     env,
+    thread,
     fmt::{self, Display, Formatter},
     fs,
     io::{self, IsTerminal},

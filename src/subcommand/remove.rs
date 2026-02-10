@@ -157,7 +157,7 @@ pub(crate) fn run() -> Result {
     println!("{head_path}");
   }
 
-  std::thread::scope(|scope| {
+  thread::scope(|scope| {
     for path in &pending_deletes {
       scope.spawn(move || {
         let _ = fs::remove_dir_all(path);
