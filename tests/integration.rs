@@ -131,20 +131,29 @@ impl<'a> Test<'a> {
   fn run(self) -> Result {
     let root = self.tempdir.path().canonicalize()?.display().to_string();
 
+    let root = root
+      .strip_prefix(r"\\?\")
+      .unwrap_or(&root)
+      .replace('\\', "/");
+
     let output = self.command(&self.arguments)?;
 
     let hash_regex = Regex::new(r"\b[0-9a-fA-F]{7,40}\b").unwrap();
 
     let stderr = hash_regex
       .replace_all(
-        &str::from_utf8(&output.stderr)?.replace(&root, "[ROOT]"),
+        &str::from_utf8(&output.stderr)?
+          .replace('\\', "/")
+          .replace(&root, "[ROOT]"),
         "[HASH]",
       )
       .into_owned();
 
     let stdout = hash_regex
       .replace_all(
-        &str::from_utf8(&output.stdout)?.replace(&root, "[ROOT]"),
+        &str::from_utf8(&output.stdout)?
+          .replace('\\', "/")
+          .replace(&root, "[ROOT]"),
         "[HASH]",
       )
       .into_owned();

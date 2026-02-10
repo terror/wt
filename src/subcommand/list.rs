@@ -37,6 +37,7 @@ pub(crate) fn run() -> Result {
   let style = Style::stdout();
 
   let current_dir = env::current_dir()?;
+  let current_dir = current_dir.canonicalize().unwrap_or(current_dir);
 
   let output = Command::new("git")
     .args(["worktree", "list", "--porcelain"])
@@ -70,7 +71,9 @@ pub(crate) fn run() -> Result {
 
   for (worktree, (insertions, deletions)) in worktrees.iter().zip(stats.iter())
   {
-    let is_current = current_dir.starts_with(&worktree.path);
+    let is_current = Path::new(&worktree.path)
+      .canonicalize()
+      .is_ok_and(|path| current_dir.starts_with(path));
 
     let marker = if is_current {
       style.apply(style::GREEN, "*")
