@@ -37,4 +37,7 @@ serde = { version = "1.0.228", features = ["derive"] }
 skim = { version = "2.0.2", default-features = false, features = ["cli"] }
 
 [dev-dependencies]
+indoc = "2.0.7"
+pretty_assertions = "1.4.1"
+regex = "1.12.3"
 tempfile = "3.24.0"
