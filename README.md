@@ -44,7 +44,7 @@ Otherwise, see below for the complete package list:
 
 ### Pre-built binaries
 
-Pre-built binaries for Linux, MacOS, and Windows can be found on
+Pre-built binaries for Linux and MacOS can be found on
 [the releases page](https://github.com/terror/wt-cli/releases).
 
 ## Usage
