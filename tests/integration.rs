@@ -264,6 +264,19 @@ fn create_duplicate_branch() -> Result {
 }
 
 #[test]
+fn create_from_worktree_uses_head_path() -> Result {
+  Test::new("project")?
+    .setup(&["create", "feature"])
+    .directory("project.feature")
+    .argument("create")
+    .argument("bar")
+    .exists(&["project.bar"])
+    .expected_stderr("created worktree bar at project.bar\n")
+    .expected_stdout("[ROOT]/project.bar\n")
+    .run()
+}
+
+#[test]
 
 fn create_in_subdirectory() -> Result {
   let test = Test::new("project")?;
