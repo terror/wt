@@ -17,7 +17,14 @@ wt() {
 
       local dir exit_code=0
 
-      dir=$(command wt "$@") || exit_code=$?
+      dir=$(
+        command wt "$@" || exit_code=$?
+        printf .
+        exit "$exit_code"
+      ) || exit_code=$?
+
+      dir=${dir%.}
+      dir=${dir%$'\n'}
 
       if [ -n "$dir" ]; then
         builtin cd "$dir" || return $?
