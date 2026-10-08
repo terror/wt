@@ -172,11 +172,7 @@ impl<'a> Test<'a> {
       "unexpected exit status\nstderr: {stderr}"
     );
 
-    if self.expected_stderr.is_empty() && !stderr.is_empty() {
-      panic!("expected empty stderr, got: {stderr}");
-    } else {
-      assert_eq!(stderr, self.expected_stderr);
-    }
+    assert_eq!(stderr, self.expected_stderr);
 
     assert_eq!(stdout, self.expected_stdout);
 
