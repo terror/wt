@@ -6,6 +6,34 @@ struct Removal {
 }
 
 #[cfg(unix)]
+impl Removal {
+  fn cleanup(mut self) -> Result {
+    thread::scope(|scope| {
+      self
+        .paths
+        .iter()
+        .map(|path| {
+          scope.spawn(move || {
+            fs::remove_dir_all(&path.trash_path).map_err(|error| {
+              anyhow!(
+                "failed to remove worktree directory `{}`: {error}",
+                path.trash_path.display(),
+              )
+            })
+          })
+        })
+        .collect::<Vec<_>>()
+        .into_iter()
+        .try_for_each(|handle| handle.join().unwrap())
+    })?;
+
+    self.paths.clear();
+
+    Ok(())
+  }
+}
+
+#[cfg(unix)]
 impl Drop for Removal {
   fn drop(&mut self) {
     thread::scope(|scope| {
@@ -183,7 +211,7 @@ fn remove_worktrees(
 ) -> Result {
   let style = Style::stderr();
 
-  let _removal = remove_directories(selected, head_path)?;
+  remove_directories(selected, head_path)?.cleanup()?;
 
   for (branch, path) in selected {
     eprintln!(
