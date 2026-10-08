@@ -1,6 +1,7 @@
-use {super::*, create::Create};
+use {super::*, create::Create, init::Init};
 
 mod create;
+mod init;
 mod list;
 mod remove;
 mod switch;
@@ -10,6 +11,8 @@ pub(crate) enum Subcommand {
   /// Create a new worktree.
   #[clap(alias = "c")]
   Create(Create),
+  #[clap(about = "Generate shell integration.")]
+  Init(Init),
   /// List all worktrees.
   #[clap(alias = "l")]
   List,
@@ -25,6 +28,10 @@ impl Subcommand {
   pub(crate) fn run(self) -> Result {
     match self {
       Self::Create(create) => create.run(),
+      Self::Init(init) => {
+        init.run();
+        Ok(())
+      }
       Self::List => list::run(),
       Self::Remove => remove::run(),
       Self::Switch => switch::run(),

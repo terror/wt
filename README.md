@@ -57,6 +57,7 @@ Usage: wt <COMMAND>
 
 Commands:
   create  Create a new worktree
+  init    Generate shell integration.
   list    List all worktrees
   remove  Remove worktrees
   switch  Switch to a different worktree
@@ -66,6 +67,18 @@ Options:
   -h, --help     Print help
   -V, --version  Print version
 ```
+
+### Shell Integration
+
+To enable shell integration, add the following to your `~/.zshrc`:
+
+```zsh
+eval "$(wt init zsh)"
+```
+
+This defines a `wt` shell function that wraps the binary and changes to the
+worktree directory returned by `create`, `remove`, or `switch`, including
+their aliases `c`, `r`, and `s`.
 
 ## Prior Art
 
