@@ -204,7 +204,7 @@ pub(crate) fn run() -> Result {
   let current_dir = env::current_dir()?;
 
   let output = Command::new("git")
-    .args(["worktree", "list", "--porcelain"])
+    .args(["worktree", "list", "--porcelain", "-z"])
     .stderr(Stdio::null())
     .output()?;
 
@@ -213,7 +213,7 @@ pub(crate) fn run() -> Result {
   }
 
   let mut worktrees = str::from_utf8(&output.stdout)?
-    .split("\n\n")
+    .split("\0\0")
     .filter_map(|block| Worktree::try_from(block).ok());
 
   let head_path = worktrees

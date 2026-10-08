@@ -12,16 +12,16 @@ impl TryFrom<&str> for Worktree {
   type Error = Error;
 
   fn try_from(value: &str) -> std::result::Result<Self, Self::Error> {
-    let bare = value.lines().any(|line| line == "bare");
+    let bare = value.split('\0').any(|line| line == "bare");
 
     let path = value
-      .lines()
+      .split('\0')
       .find_map(|line| line.strip_prefix("worktree "))
       .ok_or_else(|| anyhow!("missing worktree path"))?
       .to_string();
 
     let head = value
-      .lines()
+      .split('\0')
       .find_map(|line| line.strip_prefix("HEAD "))
       .map_or_else(
         || "unknown".to_string(),
@@ -29,7 +29,7 @@ impl TryFrom<&str> for Worktree {
       );
 
     let branch = value
-      .lines()
+      .split('\0')
       .find_map(|line| {
         line
           .strip_prefix("branch refs/heads/")
@@ -67,7 +67,7 @@ mod tests {
   fn from_block_with_branch() {
     assert_eq!(
       Worktree::try_from(
-        "worktree /tmp/repo\nHEAD abc123\nbranch refs/heads/main\n"
+        "worktree /tmp/repo\0HEAD abc123\0branch refs/heads/main\0"
       )
       .unwrap(),
       Worktree {
@@ -82,7 +82,7 @@ mod tests {
   #[test]
   fn from_block_with_detached() {
     assert_eq!(
-      Worktree::try_from("worktree /tmp/repo\nHEAD abc123\ndetached\n")
+      Worktree::try_from("worktree /tmp/repo\0HEAD abc123\0detached\0")
         .unwrap(),
       Worktree {
         bare: false,
@@ -95,7 +95,7 @@ mod tests {
 
   #[test]
   fn from_block_without_branch() {
-    assert!(Worktree::try_from("worktree /tmp/repo\nHEAD abc123\n").is_err());
+    assert!(Worktree::try_from("worktree /tmp/repo\0HEAD abc123\0").is_err());
   }
 
   #[test]

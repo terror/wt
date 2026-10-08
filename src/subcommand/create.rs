@@ -18,7 +18,7 @@ impl Create {
     let root = Path::new(str::from_utf8(&root.stdout)?.trim());
 
     let head_path = Command::new("git")
-      .args(["worktree", "list", "--porcelain"])
+      .args(["worktree", "list", "--porcelain", "-z"])
       .stderr(Stdio::null())
       .output()
       .ok()
@@ -26,7 +26,7 @@ impl Create {
       .and_then(|output| {
         str::from_utf8(&output.stdout)
           .ok()
-          .and_then(|stdout| stdout.split("\n\n").next())
+          .and_then(|stdout| stdout.split("\0\0").next())
           .and_then(|block| Worktree::try_from(block).ok())
           .map(|worktree| PathBuf::from(worktree.path))
       })
