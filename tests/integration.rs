@@ -90,7 +90,7 @@ impl<'a> Test<'a> {
     }
   }
 
-  fn git(directory: &Path, arguments: &[&str]) {
+  fn git(directory: &Path, arguments: &[&str]) -> String {
     let output = Command::new("git")
       .args(arguments)
       .current_dir(directory)
@@ -103,8 +103,10 @@ impl<'a> Test<'a> {
       output.status.success(),
       "git {} failed: {}",
       arguments.join(" "),
-      String::from_utf8_lossy(&output.stderr)
+      str::from_utf8(&output.stderr).unwrap()
     );
+
+    String::from_utf8(output.stdout).unwrap()
   }
 
   fn new(name: &str) -> Result<Self> {
@@ -244,6 +246,52 @@ fn create_duplicate_branch() -> Result {
       "error: worktree path `[ROOT]/project.feature` already exists\n",
     )
     .run()
+}
+
+#[test]
+fn create_existing_branch_with_from() -> Result {
+  let test = Test::new("foo")?;
+
+  Test::git(&test.workdir, &["branch", "bar"]);
+
+  test
+    .argument("create")
+    .argument("bar")
+    .argument("--from")
+    .argument("main")
+    .expected_status(1)
+    .expected_stderr("error: cannot use `--from` with existing branch `bar`\n")
+    .run()
+}
+
+#[test]
+fn create_from_branch() -> Result {
+  #[track_caller]
+  fn case(branch: &str, arguments: &[&str]) -> Result {
+    let test = Test::new("foo")?;
+
+    Test::git(&test.workdir, &["branch", branch]);
+
+    let head = Test::git(&test.workdir, &["rev-parse", "HEAD"]);
+
+    Test::git(&test.workdir, &["commit", "--allow-empty", "-m", "bar"]);
+
+    let test = test.setup(arguments);
+
+    let worktree = test.tempdir.path().join("foo.bar");
+
+    assert_eq!(
+      Test::git(&worktree, &["symbolic-ref", "HEAD"]),
+      "refs/heads/bar\n"
+    );
+
+    assert_eq!(Test::git(&worktree, &["rev-parse", "HEAD"]), head);
+
+    Ok(())
+  }
+
+  case("baz", &["create", "bar", "--from", "baz"])?;
+  case("bar", &["create", "bar"])
 }
 
 #[test]
