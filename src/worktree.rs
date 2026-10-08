@@ -9,6 +9,43 @@ pub(crate) struct Worktree {
   pub(crate) path: String,
 }
 
+impl Worktree {
+  pub(crate) fn diff_base(&self) -> Result<String> {
+    let path = &self.path;
+
+    let output = Command::new("git")
+      .args(["rev-parse", "--verify", "--quiet", "HEAD"])
+      .current_dir(path)
+      .output()?;
+
+    let output = match output.status.code() {
+      Some(0) => output,
+      Some(1) => {
+        let output = Command::new("git")
+          .args(["hash-object", "-t", "tree", "--stdin"])
+          .current_dir(path)
+          .stdin(Stdio::null())
+          .output()?;
+
+        if !output.status.success() {
+          bail!(
+            "failed to hash empty tree for worktree `{path}`: {}",
+            str::from_utf8(&output.stderr)?.trim(),
+          );
+        }
+
+        output
+      }
+      _ => bail!(
+        "failed to resolve HEAD for worktree `{path}`: {}",
+        str::from_utf8(&output.stderr)?.trim(),
+      ),
+    };
+
+    Ok(str::from_utf8(&output.stdout)?.trim().to_string())
+  }
+}
+
 impl TryFrom<&str> for Worktree {
   type Error = Error;
 
@@ -62,6 +99,15 @@ impl SkimItem for Worktree {
 
   fn output(&self) -> Cow<'_, str> {
     Cow::Borrowed(&self.path)
+  }
+
+  fn preview(&self, _context: PreviewContext) -> ItemPreview {
+    match self.diff_base() {
+      Ok(base) => ItemPreview::Command(format!(
+        "git -C {{}} diff --color=always {base} --"
+      )),
+      Err(error) => ItemPreview::Text(format!("error: {error}")),
+    }
   }
 
   fn text(&self) -> Cow<'_, str> {

@@ -19,8 +19,9 @@ use {
 use {
   ratatui::text::Line,
   skim::{
-    DisplayContext, Skim, SkimItem, SkimItemReceiver, SkimItemSender,
-    options::SkimOptionsBuilder, prelude::unbounded,
+    DisplayContext, ItemPreview, PreviewContext, Skim, SkimItem,
+    SkimItemReceiver, SkimItemSender, options::SkimOptionsBuilder,
+    prelude::unbounded,
   },
   std::{borrow::Cow, fs, path::PathBuf, sync::Arc, thread},
 };

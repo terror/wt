@@ -1,39 +1,11 @@
 use super::*;
 
-fn diff_stat(path: &str) -> Result<(usize, usize)> {
-  let output = Command::new("git")
-    .args(["rev-parse", "--verify", "--quiet", "HEAD"])
-    .current_dir(path)
-    .output()?;
-
-  let output = match output.status.code() {
-    Some(0) => output,
-    Some(1) => {
-      let output = Command::new("git")
-        .args(["hash-object", "-t", "tree", "--stdin"])
-        .current_dir(path)
-        .stdin(Stdio::null())
-        .output()?;
-
-      if !output.status.success() {
-        bail!(
-          "failed to hash empty tree for worktree `{path}`: {}",
-          str::from_utf8(&output.stderr)?.trim(),
-        );
-      }
-
-      output
-    }
-    _ => bail!(
-      "failed to resolve HEAD for worktree `{path}`: {}",
-      str::from_utf8(&output.stderr)?.trim(),
-    ),
-  };
-
-  let base = str::from_utf8(&output.stdout)?.trim();
+fn diff_stat(worktree: &Worktree) -> Result<(usize, usize)> {
+  let base = worktree.diff_base()?;
+  let path = &worktree.path;
 
   let output = Command::new("git")
-    .args(["diff", "--numstat", base, "--"])
+    .args(["diff", "--numstat", &base, "--"])
     .current_dir(path)
     .output()?;
 
@@ -106,7 +78,7 @@ pub(crate) fn run() -> Result {
 
   let stats = worktrees
     .iter()
-    .map(|w| diff_stat(&w.path))
+    .map(diff_stat)
     .collect::<Result<Vec<_>>>()?;
 
   let branch_width = worktrees
