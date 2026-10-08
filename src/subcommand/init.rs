@@ -2,6 +2,8 @@ use super::*;
 
 #[derive(Clone, Debug, clap::ValueEnum)]
 enum Shell {
+  Bash,
+  Fish,
   Zsh,
 }
 
@@ -14,7 +16,8 @@ pub(crate) struct Init {
 impl Init {
   pub(crate) fn run(self) {
     match self.shell {
-      Shell::Zsh => print!("{}", include_str!("init.zsh")),
+      Shell::Bash | Shell::Zsh => print!("{}", include_str!("init.sh")),
+      Shell::Fish => print!("{}", include_str!("init.fish")),
     }
   }
 }
