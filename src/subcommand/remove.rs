@@ -129,15 +129,35 @@ fn remove_directories(
   }
 
   let worktrees = str::from_utf8(&output.stdout)?
-    .split('\0')
-    .filter_map(|line| line.strip_prefix("worktree "))
-    .map(Path::new)
-    .collect::<Vec<_>>();
+    .split("\0\0")
+    .filter(|block| !block.is_empty())
+    .map(Worktree::try_from)
+    .collect::<Result<Vec<_>>>()?;
 
   for (branch, path) in selected {
     let path = Path::new(path);
 
-    for &worktree in &worktrees {
+    let worktree = worktrees
+      .iter()
+      .find(|worktree| Path::new(&worktree.path) == path)
+      .ok_or_else(|| {
+        anyhow!(
+          "cannot remove worktree `{branch}`: `{}` is no longer registered",
+          path.display(),
+        )
+      })?;
+
+    if worktree.branch != *branch {
+      bail!(
+        "cannot remove worktree `{branch}`: `{}` is now on `{}`",
+        path.display(),
+        worktree.branch,
+      );
+    }
+
+    for worktree in &worktrees {
+      let worktree = Path::new(&worktree.path);
+
       if worktree != path && worktree.starts_with(path) {
         bail!(
           "cannot remove worktree `{branch}`: contains registered worktree `{}`",
