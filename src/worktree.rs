@@ -2,6 +2,7 @@ use super::*;
 
 #[derive(Debug, Eq, PartialEq)]
 pub(crate) struct Worktree {
+  pub(crate) bare: bool,
   pub(crate) branch: String,
   pub(crate) head: String,
   pub(crate) path: String,
@@ -11,6 +12,8 @@ impl TryFrom<&str> for Worktree {
   type Error = Error;
 
   fn try_from(value: &str) -> std::result::Result<Self, Self::Error> {
+    let bare = value.lines().any(|line| line == "bare");
+
     let path = value
       .lines()
       .find_map(|line| line.strip_prefix("worktree "))
@@ -33,9 +36,15 @@ impl TryFrom<&str> for Worktree {
           .map(str::to_string)
           .or_else(|| (line == "detached").then(|| "(detached)".to_string()))
       })
+      .or_else(|| bare.then(|| "(bare)".to_string()))
       .ok_or_else(|| anyhow!("missing branch"))?;
 
-    Ok(Worktree { branch, head, path })
+    Ok(Worktree {
+      bare,
+      branch,
+      head,
+      path,
+    })
   }
 }
 
@@ -62,6 +71,7 @@ mod tests {
       )
       .unwrap(),
       Worktree {
+        bare: false,
         branch: "main".to_string(),
         head: "abc123".to_string(),
         path: "/tmp/repo".to_string(),
@@ -75,6 +85,7 @@ mod tests {
       Worktree::try_from("worktree /tmp/repo\nHEAD abc123\ndetached\n")
         .unwrap(),
       Worktree {
+        bare: false,
         branch: "(detached)".to_string(),
         head: "abc123".to_string(),
         path: "/tmp/repo".to_string(),

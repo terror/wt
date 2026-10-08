@@ -19,7 +19,7 @@ pub(crate) fn run() -> Result {
   let worktrees = str::from_utf8(&output.stdout)?
     .split("\n\n")
     .filter_map(|block| Worktree::try_from(block).ok())
-    .filter(|worktree| Path::new(&worktree.path).is_dir())
+    .filter(|worktree| !worktree.bare && Path::new(&worktree.path).is_dir())
     .collect::<Vec<_>>();
 
   if worktrees.is_empty() {
