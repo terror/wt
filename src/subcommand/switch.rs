@@ -28,7 +28,10 @@ pub(crate) fn run() -> Result {
 
   let items = worktrees
     .into_iter()
-    .map(|worktree| Arc::new(worktree) as Arc<dyn SkimItem>)
+    .enumerate()
+    .map(|(index, worktree)| {
+      Arc::new(Worktree { index, ..worktree }) as Arc<dyn SkimItem>
+    })
     .collect::<Vec<Arc<dyn SkimItem>>>();
 
   let options = SkimOptionsBuilder::default()
