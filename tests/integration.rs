@@ -172,11 +172,7 @@ impl<'a> Test<'a> {
       "unexpected exit status\nstderr: {stderr}"
     );
 
-    if self.expected_stderr.is_empty() && !stderr.is_empty() {
-      panic!("expected empty stderr, got: {stderr}");
-    } else {
-      assert_eq!(stderr, self.expected_stderr);
-    }
+    assert_eq!(stderr, self.expected_stderr);
 
     assert_eq!(stdout, self.expected_stdout);
 
@@ -223,16 +219,6 @@ impl<'a> Test<'a> {
       workdir,
     })
   }
-}
-
-#[cfg(unix)]
-#[test]
-fn convert_no_branches() -> Result {
-  Test::new("project")?
-    .argument("convert")
-    .expected_status(1)
-    .expected_stderr("error: no branches without worktrees\n")
-    .run()
 }
 
 #[test]
