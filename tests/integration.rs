@@ -225,16 +225,6 @@ impl<'a> Test<'a> {
   }
 }
 
-#[cfg(unix)]
-#[test]
-fn convert_no_branches() -> Result {
-  Test::new("project")?
-    .argument("convert")
-    .expected_status(1)
-    .expected_stderr("error: no branches without worktrees\n")
-    .run()
-}
-
 #[test]
 fn create() -> Result {
   Test::new("project")?
