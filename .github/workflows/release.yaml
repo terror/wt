@@ -164,14 +164,14 @@ jobs:
       run: >-
         gh release download
         --repo ${{ github.repository }}
-        --pattern '*'
+        --pattern '*.tar.gz'
         --dir release
         ${{ github.ref_name }}
 
     - name: Create Checksums
       run: |
         cd release
-        shasum -a 256 ./* > ../SHA256SUMS
+        shasum -a 256 ./*.tar.gz > ../SHA256SUMS
 
     - name: Publish Checksums
       uses: softprops/action-gh-release@v2.2.1
