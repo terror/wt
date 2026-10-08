@@ -232,7 +232,7 @@ pub(crate) fn run() -> Result {
 
   let options = SkimOptionsBuilder::default()
     .multi(true)
-    .preview(Some("git -C {} diff --color=always".to_string()))
+    .preview(Some("git -C {} diff --color=always HEAD --".to_string()))
     .build()?;
 
   let (tx, rx): (SkimItemSender, SkimItemReceiver) = unbounded();

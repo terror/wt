@@ -32,7 +32,7 @@ pub(crate) fn run() -> Result {
     .collect::<Vec<Arc<dyn SkimItem>>>();
 
   let options = SkimOptionsBuilder::default()
-    .preview(Some("git -C {} diff --color=always".to_string()))
+    .preview(Some("git -C {} diff --color=always HEAD --".to_string()))
     .build()?;
 
   let (tx, rx): (SkimItemSender, SkimItemReceiver) = unbounded();

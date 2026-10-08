@@ -2,7 +2,7 @@ use super::*;
 
 fn diff_stat(path: &str) -> (usize, usize) {
   let output = Command::new("git")
-    .args(["diff", "--numstat"])
+    .args(["diff", "--numstat", "HEAD", "--"])
     .current_dir(path)
     .stderr(Stdio::null())
     .output()
