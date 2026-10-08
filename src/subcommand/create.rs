@@ -17,20 +17,24 @@ impl Create {
 
     let root = Path::new(str::from_utf8(&root.stdout)?.trim());
 
-    let head_path = Command::new("git")
+    let worktrees = Command::new("git")
       .args(["worktree", "list", "--porcelain", "-z"])
       .stderr(Stdio::null())
       .output()
       .ok()
       .filter(|output| output.status.success())
       .and_then(|output| {
-        str::from_utf8(&output.stdout)
-          .ok()
-          .and_then(|stdout| stdout.split("\0\0").next())
-          .and_then(|block| Worktree::try_from(block).ok())
-          .map(|worktree| PathBuf::from(worktree.path))
+        str::from_utf8(&output.stdout).ok().map(|stdout| {
+          stdout
+            .split('\0')
+            .filter_map(|line| line.strip_prefix("worktree "))
+            .map(PathBuf::from)
+            .collect::<Vec<_>>()
+        })
       })
-      .unwrap_or_else(|| root.to_path_buf());
+      .unwrap_or_default();
+
+    let head_path = worktrees.first().map_or(root, PathBuf::as_path);
 
     let project = head_path.file_name().ok_or_else(|| {
       anyhow!("failed to get project name from `{}`", head_path.display())
@@ -56,6 +60,13 @@ impl Create {
       Ok(_) => bail!("worktree path `{}` already exists", worktree.display()),
       Err(error) if error.kind() == io::ErrorKind::NotFound => {}
       Err(error) => return Err(error.into()),
+    }
+
+    if worktrees.contains(&worktree) {
+      bail!(
+        "worktree path `{}` is already registered",
+        worktree.display()
+      );
     }
 
     let output = Command::new("git")
