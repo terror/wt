@@ -15,13 +15,15 @@ wt() {
         esac
       done
 
-      local dir
+      local dir exit_code=0
 
-      dir=$(command wt "$@") || return $?
+      dir=$(command wt "$@") || exit_code=$?
 
       if [ -n "$dir" ]; then
         builtin cd "$dir" || return $?
       fi
+
+      return "$exit_code"
 
       ;;
     *)
