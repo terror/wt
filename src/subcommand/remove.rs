@@ -248,7 +248,18 @@ fn remove_worktrees(
     .filter_map(|line| line.strip_prefix("refs/heads/"))
     .collect::<Vec<_>>();
 
-  remove_directories(selected, head_path)?.cleanup()?;
+  let result =
+    remove_directories(selected, head_path).and_then(Removal::cleanup);
+
+  if selected
+    .iter()
+    .any(|(_, path)| current_dir.starts_with(path))
+    && !current_dir.is_dir()
+  {
+    println!("{head_path}");
+  }
+
+  result?;
 
   for (branch, path) in selected {
     eprintln!(
@@ -279,13 +290,6 @@ fn remove_worktrees(
         style.apply(style::BOLD, branch),
       );
     }
-  }
-
-  if selected
-    .iter()
-    .any(|(_, path)| current_dir.starts_with(path))
-  {
-    println!("{head_path}");
   }
 
   Ok(())
