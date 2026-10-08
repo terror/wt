@@ -211,6 +211,23 @@ fn remove_worktrees(
 ) -> Result {
   let style = Style::stderr();
 
+  let output = Command::new("git")
+    .current_dir(head_path)
+    .args(["for-each-ref", "--format=%(refname)", "refs/heads/"])
+    .output()?;
+
+  if !output.status.success() {
+    bail!(
+      "failed to list branches: {}",
+      str::from_utf8(&output.stderr)?.trim(),
+    );
+  }
+
+  let branches = str::from_utf8(&output.stdout)?
+    .lines()
+    .filter_map(|line| line.strip_prefix("refs/heads/"))
+    .collect::<Vec<_>>();
+
   remove_directories(selected, head_path)?.cleanup()?;
 
   for (branch, path) in selected {
@@ -221,7 +238,7 @@ fn remove_worktrees(
       style.apply(style::CYAN, path),
     );
 
-    if branch != "(detached)" {
+    if branch != "(detached)" && branches.contains(&branch.as_str()) {
       let result = Command::new("git")
         .current_dir(head_path)
         .args(["branch", "-D", branch])

@@ -1,36 +1,70 @@
 use super::*;
 
-fn diff_stat(path: &str) -> (usize, usize) {
+fn diff_stat(path: &str) -> Result<(usize, usize)> {
   let output = Command::new("git")
-    .args(["diff", "--numstat", "HEAD", "--"])
+    .args(["rev-parse", "--verify", "--quiet", "HEAD"])
     .current_dir(path)
-    .stderr(Stdio::null())
-    .output()
-    .ok();
+    .output()?;
 
-  let Some(output) = output.filter(|output| output.status.success()) else {
-    return (0, 0);
+  let output = match output.status.code() {
+    Some(0) => output,
+    Some(1) => {
+      let output = Command::new("git")
+        .args(["hash-object", "-t", "tree", "--stdin"])
+        .current_dir(path)
+        .stdin(Stdio::null())
+        .output()?;
+
+      if !output.status.success() {
+        bail!(
+          "failed to hash empty tree for worktree `{path}`: {}",
+          str::from_utf8(&output.stderr)?.trim(),
+        );
+      }
+
+      output
+    }
+    _ => bail!(
+      "failed to resolve HEAD for worktree `{path}`: {}",
+      str::from_utf8(&output.stderr)?.trim(),
+    ),
   };
 
-  let stdout = str::from_utf8(&output.stdout).unwrap_or_default();
+  let base = str::from_utf8(&output.stdout)?.trim();
 
-  stdout
-    .lines()
-    .fold((0, 0), |(insertions, deletions), line| {
-      let mut parts = line.split('\t');
+  let output = Command::new("git")
+    .args(["diff", "--numstat", base, "--"])
+    .current_dir(path)
+    .output()?;
 
-      let added = parts
-        .next()
-        .and_then(|part| part.parse::<usize>().ok())
-        .unwrap_or(0);
+  if !output.status.success() {
+    bail!(
+      "failed to diff worktree `{path}`: {}",
+      str::from_utf8(&output.stderr)?.trim(),
+    );
+  }
 
-      let removed = parts
-        .next()
-        .and_then(|part| part.parse::<usize>().ok())
-        .unwrap_or(0);
+  let stdout = str::from_utf8(&output.stdout)?;
 
-      (insertions + added, deletions + removed)
-    })
+  Ok(
+    stdout
+      .lines()
+      .fold((0, 0), |(insertions, deletions), line| {
+        let mut parts = line.split('\t');
+
+        let added = parts
+          .next()
+          .and_then(|part| part.parse::<usize>().ok())
+          .unwrap_or(0);
+
+        let removed = parts
+          .next()
+          .and_then(|part| part.parse::<usize>().ok())
+          .unwrap_or(0);
+
+        (insertions + added, deletions + removed)
+      }),
+  )
 }
 
 pub(crate) fn run() -> Result {
@@ -73,7 +107,7 @@ pub(crate) fn run() -> Result {
   let stats = worktrees
     .iter()
     .map(|w| diff_stat(&w.path))
-    .collect::<Vec<_>>();
+    .collect::<Result<Vec<_>>>()?;
 
   let branch_width = worktrees
     .iter()
