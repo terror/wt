@@ -5,6 +5,7 @@ pub(crate) struct Worktree {
   pub(crate) bare: bool,
   pub(crate) branch: String,
   pub(crate) head: String,
+  pub(crate) index: usize,
   pub(crate) path: String,
 }
 
@@ -43,6 +44,7 @@ impl TryFrom<&str> for Worktree {
       bare,
       branch,
       head,
+      index: 0,
       path,
     })
   }
@@ -50,6 +52,14 @@ impl TryFrom<&str> for Worktree {
 
 #[cfg(unix)]
 impl SkimItem for Worktree {
+  fn display(&self, context: DisplayContext) -> Line<'_> {
+    context.to_line(Cow::Owned(format!("{}  {}", self.branch, self.path)))
+  }
+
+  fn get_index(&self) -> usize {
+    self.index
+  }
+
   fn output(&self) -> Cow<'_, str> {
     Cow::Borrowed(&self.path)
   }
@@ -74,6 +84,7 @@ mod tests {
         bare: false,
         branch: "main".to_string(),
         head: "abc123".to_string(),
+        index: 0,
         path: "/tmp/repo".to_string(),
       },
     );
@@ -88,6 +99,7 @@ mod tests {
         bare: false,
         branch: "(detached)".to_string(),
         head: "abc123".to_string(),
+        index: 0,
         path: "/tmp/repo".to_string(),
       },
     );

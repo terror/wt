@@ -2783,6 +2783,7 @@ dependencies = [
  "clap",
  "indoc",
  "pretty_assertions",
+ "ratatui",
  "regex",
  "skim",
  "tempfile",

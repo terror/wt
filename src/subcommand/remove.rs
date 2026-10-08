@@ -255,7 +255,10 @@ pub(crate) fn run() -> Result {
 
   let items = worktrees
     .filter(|worktree| !worktree.bare && Path::new(&worktree.path).is_dir())
-    .map(|worktree| Arc::new(worktree) as Arc<dyn SkimItem>)
+    .enumerate()
+    .map(|(index, worktree)| {
+      Arc::new(Worktree { index, ..worktree }) as Arc<dyn SkimItem>
+    })
     .collect::<Vec<Arc<dyn SkimItem>>>();
 
   if items.is_empty() {

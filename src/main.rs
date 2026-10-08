@@ -17,8 +17,9 @@ use {
 
 #[cfg(unix)]
 use {
+  ratatui::text::Line,
   skim::{
-    Skim, SkimItem, SkimItemReceiver, SkimItemSender,
+    DisplayContext, Skim, SkimItem, SkimItemReceiver, SkimItemSender,
     options::SkimOptionsBuilder, prelude::unbounded,
   },
   std::{borrow::Cow, fs, path::PathBuf, sync::Arc, thread},
