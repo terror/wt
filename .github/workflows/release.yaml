@@ -58,13 +58,13 @@ jobs:
           target_rustflags: '--codegen linker=arm-linux-gnueabihf-gcc'
         - target: arm-unknown-linux-gnueabihf
           os: ubuntu-latest
-          target_rustflags: '--codegen linker=arm-linux-gnueabihf-gcc'
+          target_rustflags: '--codegen linker=arm-linux-gnueabihf-gcc --codegen relocation-model=static'
         - target: armv7-unknown-linux-musleabihf
           os: ubuntu-latest
           target_rustflags: '--codegen linker=arm-linux-gnueabihf-gcc'
         - target: armv7-unknown-linux-gnueabihf
           os: ubuntu-latest
-          target_rustflags: '--codegen linker=arm-linux-gnueabihf-gcc'
+          target_rustflags: '--codegen linker=arm-linux-gnueabihf-gcc --codegen relocation-model=static'
         - target: x86_64-apple-darwin
           os: macos-latest
           target_rustflags: ''
