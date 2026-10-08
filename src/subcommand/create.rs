@@ -52,6 +52,12 @@ impl Create {
       })?
       .join(&dir_name);
 
+    match worktree.symlink_metadata() {
+      Ok(_) => bail!("worktree path `{}` already exists", worktree.display()),
+      Err(error) if error.kind() == io::ErrorKind::NotFound => {}
+      Err(error) => return Err(error.into()),
+    }
+
     let output = Command::new("git")
       .args([
         "worktree",

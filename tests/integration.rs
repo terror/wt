@@ -240,12 +240,9 @@ fn create_duplicate_branch() -> Result {
     .argument("feature")
     .exists(&["project.feature"])
     .expected_status(1)
-    .expected_stderr(indoc! {
-      "
-      error: failed to create worktree `feature`: Preparing worktree (new branch 'feature')
-      fatal: a branch named 'feature' already exists
-      "
-    })
+    .expected_stderr(
+      "error: worktree path `[ROOT]/project.feature` already exists\n",
+    )
     .run()
 }
 
