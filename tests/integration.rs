@@ -382,6 +382,6 @@ fn switch_no_worktrees() -> Result {
 fn version() -> Result {
   Test::without_git()?
     .argument("--version")
-    .expected_stdout("wt-cli 0.1.2\n")
+    .expected_stdout("wt-cli 0.2.0\n")
     .run()
 }
