@@ -2,6 +2,9 @@ use {super::*, std::path::PathBuf};
 
 #[derive(Debug, Parser)]
 pub(crate) struct Create {
+  /// Base revision for the new branch.
+  #[clap(long)]
+  from: Option<String>,
   /// Branch name for the new worktree.
   name: String,
 }
@@ -69,14 +72,41 @@ impl Create {
       );
     }
 
-    let output = Command::new("git")
+    let branch = Command::new("git")
       .args([
-        "worktree",
-        "add",
-        "-b",
-        &self.name,
-        &worktree.to_string_lossy(),
+        "show-ref",
+        "--verify",
+        "--quiet",
+        &format!("refs/heads/{}", self.name),
       ])
+      .output()?;
+
+    let exists = match branch.status.code() {
+      Some(0) => true,
+      Some(1) => false,
+      _ => bail!(
+        "failed to check branch `{}`: {}",
+        self.name,
+        str::from_utf8(&branch.stderr)?.trim()
+      ),
+    };
+
+    if exists && self.from.is_some() {
+      bail!("cannot use `--from` with existing branch `{}`", self.name);
+    }
+
+    let mut command = Command::new("git");
+
+    command.args(["worktree", "add"]);
+
+    if !exists {
+      command.args(["-b", &self.name]);
+    }
+
+    let output = command
+      .arg("--")
+      .arg(&worktree)
+      .args(self.from.as_ref().or(exists.then_some(&self.name)))
       .stdout(Stdio::null())
       .stderr(Stdio::piped())
       .output()?;
