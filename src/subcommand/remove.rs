@@ -38,7 +38,7 @@ impl Drop for Removal {
   fn drop(&mut self) {
     thread::scope(|scope| {
       for path in self.paths.iter().rev() {
-        if path.pruned().unwrap_or(false) {
+        if path.unregistered().unwrap_or(false) {
           scope.spawn(move || {
             let _ = fs::remove_dir_all(&path.trash_path);
           });
@@ -98,7 +98,7 @@ impl RemovalPath {
     })
   }
 
-  fn pruned(&self) -> Result<bool> {
+  fn unregistered(&self) -> Result<bool> {
     match fs::symlink_metadata(&self.git_dir) {
       Ok(_) => Ok(false),
       Err(error) if error.kind() == io::ErrorKind::NotFound => Ok(true),
@@ -195,25 +195,25 @@ fn remove_directories(
     }
   }
 
-  if !removal.paths.is_empty() {
-    let prune = Command::new("git")
+  for path in &removal.paths {
+    let output = Command::new("git")
       .current_dir(head_path)
-      .args(["worktree", "prune"])
+      .args(["worktree", "remove", "--force", "--"])
+      .arg(&path.path)
       .stderr(Stdio::piped())
       .output()?;
 
-    if !prune.status.success() {
+    if !output.status.success() {
       bail!(
-        "failed to prune worktrees: {}",
-        str::from_utf8(&prune.stderr)?.trim()
+        "failed to remove worktree `{}`: {}",
+        path.path.display(),
+        str::from_utf8(&output.stderr)?.trim(),
       );
     }
-  }
 
-  for path in &removal.paths {
-    if !path.pruned()? {
+    if !path.unregistered()? {
       bail!(
-        "failed to prune worktree `{}`: registration `{}` still exists",
+        "failed to remove worktree `{}`: registration `{}` still exists",
         path.path.display(),
         path.git_dir.display(),
       );
