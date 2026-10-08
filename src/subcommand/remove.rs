@@ -212,23 +212,23 @@ pub(crate) fn run() -> Result {
     bail!("failed to list worktrees");
   }
 
-  let worktrees = str::from_utf8(&output.stdout)?
+  let mut worktrees = str::from_utf8(&output.stdout)?
     .split("\n\n")
-    .filter_map(|block| Worktree::try_from(block).ok())
-    .filter(|worktree| Path::new(&worktree.path).is_dir())
-    .collect::<Vec<_>>();
+    .filter_map(|block| Worktree::try_from(block).ok());
 
-  if worktrees.len() < 2 {
-    bail!("no worktrees to remove");
-  }
-
-  let head_path = worktrees[0].path.clone();
+  let head_path = worktrees
+    .next()
+    .ok_or_else(|| anyhow!("no worktrees to remove"))?
+    .path;
 
   let items = worktrees
-    .into_iter()
-    .skip(1)
+    .filter(|worktree| !worktree.bare && Path::new(&worktree.path).is_dir())
     .map(|worktree| Arc::new(worktree) as Arc<dyn SkimItem>)
     .collect::<Vec<Arc<dyn SkimItem>>>();
+
+  if items.is_empty() {
+    bail!("no worktrees to remove");
+  }
 
   let options = SkimOptionsBuilder::default()
     .multi(true)
