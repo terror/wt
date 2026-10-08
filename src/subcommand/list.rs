@@ -36,9 +36,6 @@ fn diff_stat(path: &str) -> (usize, usize) {
 pub(crate) fn run() -> Result {
   let style = Style::stdout();
 
-  let current_dir = env::current_dir()?;
-  let current_dir = current_dir.canonicalize().unwrap_or(current_dir);
-
   let output = Command::new("git")
     .args(["worktree", "list", "--porcelain", "-z"])
     .stderr(Stdio::null())
@@ -58,6 +55,21 @@ pub(crate) fn run() -> Result {
     bail!("no worktrees found");
   }
 
+  let root = Command::new("git")
+    .args(["rev-parse", "--show-toplevel"])
+    .stderr(Stdio::null())
+    .output()?;
+
+  let root = if root.status.success() {
+    let root = str::from_utf8(&root.stdout)?;
+
+    Path::new(root.strip_suffix('\n').unwrap_or(root))
+      .canonicalize()
+      .ok()
+  } else {
+    None
+  };
+
   let stats = worktrees
     .iter()
     .map(|w| diff_stat(&w.path))
@@ -73,7 +85,7 @@ pub(crate) fn run() -> Result {
   {
     let is_current = Path::new(&worktree.path)
       .canonicalize()
-      .is_ok_and(|path| current_dir.starts_with(path));
+      .is_ok_and(|path| root.as_ref() == Some(&path));
 
     let marker = if is_current {
       style.apply(style::GREEN, "*")
