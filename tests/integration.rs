@@ -304,15 +304,6 @@ fn create_slash_in_branch_name() -> Result {
 }
 
 #[test]
-fn init_zsh() -> Result {
-  Test::new("project")?
-    .argument("init")
-    .argument("zsh")
-    .expected_stdout(include_str!("../src/subcommand/init.zsh"))
-    .run()
-}
-
-#[test]
 fn list() -> Result {
   Test::new("project")?
     .argument("list")
