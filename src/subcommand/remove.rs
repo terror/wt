@@ -87,6 +87,38 @@ fn remove_directories(
   selected: &[(String, String)],
   head_path: &str,
 ) -> Result<Removal> {
+  let output = Command::new("git")
+    .current_dir(head_path)
+    .args(["worktree", "list", "--porcelain", "-z"])
+    .stderr(Stdio::piped())
+    .output()?;
+
+  if !output.status.success() {
+    bail!(
+      "failed to list worktrees: {}",
+      str::from_utf8(&output.stderr)?.trim(),
+    );
+  }
+
+  let worktrees = str::from_utf8(&output.stdout)?
+    .split('\0')
+    .filter_map(|line| line.strip_prefix("worktree "))
+    .map(Path::new)
+    .collect::<Vec<_>>();
+
+  for (branch, path) in selected {
+    let path = Path::new(path);
+
+    for &worktree in &worktrees {
+      if worktree != path && worktree.starts_with(path) {
+        bail!(
+          "cannot remove worktree `{branch}`: contains registered worktree `{}`",
+          worktree.display(),
+        );
+      }
+    }
+  }
+
   let paths = selected
     .iter()
     .enumerate()
