@@ -1,4 +1,4 @@
-use {super::*, std::path::PathBuf};
+use super::*;
 
 #[derive(Debug, Parser)]
 pub(crate) struct Create {
@@ -13,31 +13,12 @@ impl Create {
   pub(crate) fn run(self) -> Result {
     let style = Style::stdout();
 
-    let root = Command::new("git")
-      .args(["rev-parse", "--show-toplevel"])
-      .stderr(Stdio::null())
-      .output()?;
+    let worktrees = Worktree::list(".")?;
 
-    let root = Path::new(str::from_utf8(&root.stdout)?.trim());
-
-    let worktrees = Command::new("git")
-      .args(["worktree", "list", "--porcelain", "-z"])
-      .stderr(Stdio::null())
-      .output()
-      .ok()
-      .filter(|output| output.status.success())
-      .and_then(|output| {
-        str::from_utf8(&output.stdout).ok().map(|stdout| {
-          stdout
-            .split('\0')
-            .filter_map(|line| line.strip_prefix("worktree "))
-            .map(PathBuf::from)
-            .collect::<Vec<_>>()
-        })
-      })
-      .unwrap_or_default();
-
-    let head_path = worktrees.first().map_or(root, PathBuf::as_path);
+    let head_path = worktrees
+      .first()
+      .map(|worktree| Path::new(&worktree.path))
+      .ok_or_else(|| anyhow!("no worktrees found"))?;
 
     let project = head_path.file_name().ok_or_else(|| {
       anyhow!("failed to get project name from `{}`", head_path.display())
@@ -65,7 +46,10 @@ impl Create {
       Err(error) => return Err(error.into()),
     }
 
-    if worktrees.contains(&worktree) {
+    if worktrees
+      .iter()
+      .any(|registered| Path::new(&registered.path) == worktree)
+    {
       bail!(
         "worktree path `{}` is already registered",
         worktree.display()

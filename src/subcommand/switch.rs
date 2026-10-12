@@ -7,18 +7,8 @@ pub(crate) fn run() -> Result {
 
 #[cfg(unix)]
 pub(crate) fn run() -> Result {
-  let output = Command::new("git")
-    .args(["worktree", "list", "--porcelain", "-z"])
-    .stderr(Stdio::null())
-    .output()?;
-
-  if !output.status.success() {
-    bail!("failed to list worktrees");
-  }
-
-  let worktrees = str::from_utf8(&output.stdout)?
-    .split("\0\0")
-    .filter_map(|block| Worktree::try_from(block).ok())
+  let worktrees = Worktree::list(".")?
+    .into_iter()
     .filter(|worktree| !worktree.bare && Path::new(&worktree.path).is_dir())
     .collect::<Vec<_>>();
 

@@ -43,6 +43,7 @@ impl<'a> Test<'a> {
       Command::new(env!("CARGO_BIN_EXE_wt"))
         .args(arguments)
         .current_dir(&self.workdir)
+        .env("LC_ALL", "C")
         .env("NO_COLOR", "1")
         .env("GIT_CONFIG_GLOBAL", "/dev/null")
         .env("GIT_CONFIG_SYSTEM", "/dev/null")
@@ -330,7 +331,10 @@ fn create_outside_git_repo() -> Result {
     .argument("create")
     .argument("feature")
     .expected_status(1)
-    .expected_stderr("error: failed to get project name from ``\n")
+    .expected_stderr(
+      "error: failed to list worktrees: \
+       fatal: not a git repository (or any of the parent directories): .git\n",
+    )
     .run()
 }
 
@@ -375,7 +379,10 @@ fn list_outside_git_repo() -> Result {
   Test::without_git()?
     .argument("list")
     .expected_status(1)
-    .expected_stderr("error: failed to list worktrees\n")
+    .expected_stderr(
+      "error: failed to list worktrees: \
+       fatal: not a git repository (or any of the parent directories): .git\n",
+    )
     .run()
 }
 
@@ -422,7 +429,10 @@ fn switch_no_worktrees() -> Result {
   Test::without_git()?
     .argument("switch")
     .expected_status(1)
-    .expected_stderr("error: failed to list worktrees\n")
+    .expected_stderr(
+      "error: failed to list worktrees: \
+       fatal: not a git repository (or any of the parent directories): .git\n",
+    )
     .run()
 }
 
