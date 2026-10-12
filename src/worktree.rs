@@ -83,13 +83,7 @@ impl TryFrom<&str> for Worktree {
 
     let branch = value
       .split('\0')
-      .find_map(|line| match line {
-        "bare" => Some(Branch::Bare),
-        "detached" => Some(Branch::Detached),
-        _ => line
-          .strip_prefix("branch refs/heads/")
-          .map(|branch| Branch::Named(branch.to_string())),
-      })
+      .find_map(|line| line.parse::<Branch>().ok())
       .ok_or_else(|| anyhow!("missing branch"))?;
 
     Ok(Worktree {
