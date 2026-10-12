@@ -9,7 +9,7 @@ use {
     io::{self, IsTerminal},
     path::Path,
     process::{self, Command, Stdio},
-    str,
+    str::{self, FromStr},
   },
   style::Style,
   subcommand::Subcommand,

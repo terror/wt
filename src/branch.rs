@@ -16,3 +16,18 @@ impl Display for Branch {
     })
   }
 }
+
+impl FromStr for Branch {
+  type Err = Error;
+
+  fn from_str(s: &str) -> Result<Self> {
+    match s {
+      "bare" => Ok(Self::Bare),
+      "detached" => Ok(Self::Detached),
+      _ => s
+        .strip_prefix("branch refs/heads/")
+        .map(|branch| Self::Named(branch.to_string()))
+        .ok_or_else(|| anyhow!("invalid branch `{s}`")),
+    }
+  }
+}
