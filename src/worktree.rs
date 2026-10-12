@@ -44,6 +44,41 @@ impl Worktree {
     Ok(str::from_utf8(&output.stdout)?.trim().to_string())
   }
 
+  pub(crate) fn diff_stat(&self) -> Result<(usize, usize)> {
+    let path = &self.path;
+
+    let output = Command::new("git")
+      .args(["diff", "--numstat", &self.diff_base()?, "--"])
+      .current_dir(path)
+      .output()?;
+
+    if !output.status.success() {
+      bail!(
+        "failed to diff worktree `{path}`: {}",
+        str::from_utf8(&output.stderr)?.trim(),
+      );
+    }
+
+    Ok(str::from_utf8(&output.stdout)?.lines().fold(
+      (0, 0),
+      |(insertions, deletions), line| {
+        let mut parts = line.split('\t');
+
+        let added = parts
+          .next()
+          .and_then(|part| part.parse::<usize>().ok())
+          .unwrap_or(0);
+
+        let removed = parts
+          .next()
+          .and_then(|part| part.parse::<usize>().ok())
+          .unwrap_or(0);
+
+        (insertions + added, deletions + removed)
+      },
+    ))
+  }
+
   pub(crate) fn list(directory: impl AsRef<Path>) -> Result<Vec<Self>> {
     let output = Command::new("git")
       .current_dir(directory)

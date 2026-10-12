@@ -1,44 +1,5 @@
 use super::*;
 
-fn diff_stat(worktree: &Worktree) -> Result<(usize, usize)> {
-  let base = worktree.diff_base()?;
-  let path = &worktree.path;
-
-  let output = Command::new("git")
-    .args(["diff", "--numstat", &base, "--"])
-    .current_dir(path)
-    .output()?;
-
-  if !output.status.success() {
-    bail!(
-      "failed to diff worktree `{path}`: {}",
-      str::from_utf8(&output.stderr)?.trim(),
-    );
-  }
-
-  let stdout = str::from_utf8(&output.stdout)?;
-
-  Ok(
-    stdout
-      .lines()
-      .fold((0, 0), |(insertions, deletions), line| {
-        let mut parts = line.split('\t');
-
-        let added = parts
-          .next()
-          .and_then(|part| part.parse::<usize>().ok())
-          .unwrap_or(0);
-
-        let removed = parts
-          .next()
-          .and_then(|part| part.parse::<usize>().ok())
-          .unwrap_or(0);
-
-        (insertions + added, deletions + removed)
-      }),
-  )
-}
-
 pub(crate) fn run() -> Result {
   let style = Style::stdout();
 
@@ -70,7 +31,7 @@ pub(crate) fn run() -> Result {
 
   let stats = worktrees
     .iter()
-    .map(diff_stat)
+    .map(Worktree::diff_stat)
     .collect::<Result<Vec<_>>>()?;
 
   let branch_width = worktrees
