@@ -1,6 +1,7 @@
 use {
   anyhow::{Error, anyhow, bail},
   arguments::Arguments,
+  branch::Branch,
   clap::Parser,
   std::{
     env,
@@ -27,6 +28,7 @@ use {
 };
 
 mod arguments;
+mod branch;
 mod style;
 mod subcommand;
 mod worktree;

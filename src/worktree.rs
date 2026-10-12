@@ -2,9 +2,8 @@ use super::*;
 
 #[derive(Debug, Eq, PartialEq)]
 pub(crate) struct Worktree {
-  pub(crate) bare: bool,
-  pub(crate) branch: String,
-  pub(crate) head: String,
+  pub(crate) branch: Branch,
+  pub(crate) head: Option<String>,
   pub(crate) index: usize,
   pub(crate) path: String,
 }
@@ -71,8 +70,6 @@ impl TryFrom<&str> for Worktree {
   type Error = Error;
 
   fn try_from(value: &str) -> std::result::Result<Self, Self::Error> {
-    let bare = value.split('\0').any(|line| line == "bare");
-
     let path = value
       .split('\0')
       .find_map(|line| line.strip_prefix("worktree "))
@@ -82,24 +79,20 @@ impl TryFrom<&str> for Worktree {
     let head = value
       .split('\0')
       .find_map(|line| line.strip_prefix("HEAD "))
-      .map_or_else(
-        || "unknown".to_string(),
-        |h| h[..h.len().min(7)].to_string(),
-      );
+      .map(str::to_string);
 
     let branch = value
       .split('\0')
-      .find_map(|line| {
-        line
+      .find_map(|line| match line {
+        "bare" => Some(Branch::Bare),
+        "detached" => Some(Branch::Detached),
+        _ => line
           .strip_prefix("branch refs/heads/")
-          .map(str::to_string)
-          .or_else(|| (line == "detached").then(|| "(detached)".to_string()))
+          .map(|branch| Branch::Named(branch.to_string())),
       })
-      .or_else(|| bare.then(|| "(bare)".to_string()))
       .ok_or_else(|| anyhow!("missing branch"))?;
 
     Ok(Worktree {
-      bare,
       branch,
       head,
       index: 0,
@@ -132,7 +125,7 @@ impl SkimItem for Worktree {
   }
 
   fn text(&self) -> Cow<'_, str> {
-    Cow::Borrowed(&self.branch)
+    Cow::Owned(self.branch.to_string())
   }
 }
 
@@ -144,13 +137,12 @@ mod tests {
   fn from_block_with_branch() {
     assert_eq!(
       Worktree::try_from(
-        "worktree /tmp/repo\0HEAD abc123\0branch refs/heads/main\0"
+        "worktree /tmp/repo\0HEAD abc123def456\0branch refs/heads/main\0"
       )
       .unwrap(),
       Worktree {
-        bare: false,
-        branch: "main".to_string(),
-        head: "abc123".to_string(),
+        branch: Branch::Named("main".to_string()),
+        head: Some("abc123def456".to_string()),
         index: 0,
         path: "/tmp/repo".to_string(),
       },
@@ -163,9 +155,8 @@ mod tests {
       Worktree::try_from("worktree /tmp/repo\0HEAD abc123\0detached\0")
         .unwrap(),
       Worktree {
-        bare: false,
-        branch: "(detached)".to_string(),
-        head: "abc123".to_string(),
+        branch: Branch::Detached,
+        head: Some("abc123".to_string()),
         index: 0,
         path: "/tmp/repo".to_string(),
       },
