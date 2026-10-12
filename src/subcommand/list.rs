@@ -44,7 +44,9 @@ pub(crate) fn run() -> Result {
 
   let worktrees = Worktree::list(".")?
     .into_iter()
-    .filter(|worktree| !worktree.bare && Path::new(&worktree.path).is_dir())
+    .filter(|worktree| {
+      worktree.branch != Branch::Bare && Path::new(&worktree.path).is_dir()
+    })
     .collect::<Vec<_>>();
 
   if worktrees.is_empty() {
@@ -73,7 +75,7 @@ pub(crate) fn run() -> Result {
 
   let branch_width = worktrees
     .iter()
-    .map(|worktree| worktree.branch.len())
+    .map(|worktree| worktree.branch.to_string().len())
     .max()
     .unwrap_or(0);
 
@@ -99,7 +101,10 @@ pub(crate) fn run() -> Result {
       "{} {:<width$}  {}  {}  {}",
       marker,
       style.apply(style::BOLD, &worktree.branch),
-      style.apply(style::CYAN, &worktree.head),
+      style.apply(
+        style::CYAN,
+        format_args!("{:.7}", worktree.head.as_deref().unwrap_or("unknown")),
+      ),
       diff,
       worktree.path,
       width = branch_width,

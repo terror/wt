@@ -63,7 +63,11 @@ struct RemovalPath {
 
 #[cfg(unix)]
 impl RemovalPath {
-  fn new(branch: &str, path: &str, index: usize) -> Result<Self> {
+  fn new(worktree: &Worktree, index: usize) -> Result<Self> {
+    let branch = &worktree.branch;
+
+    let path = &worktree.path;
+
     let output = Command::new("git")
       .current_dir(path)
       .args(["rev-parse", "--absolute-git-dir"])
@@ -112,13 +116,15 @@ impl RemovalPath {
 
 #[cfg(unix)]
 fn remove_directories(
-  selected: &[(String, String)],
+  selected: &[&Worktree],
   head_path: &str,
 ) -> Result<Removal> {
   let worktrees = Worktree::list(head_path)?;
 
-  for (branch, path) in selected {
-    let path = Path::new(path);
+  for selected in selected {
+    let branch = &selected.branch;
+
+    let path = Path::new(&selected.path);
 
     let worktree = worktrees
       .iter()
@@ -130,7 +136,7 @@ fn remove_directories(
         )
       })?;
 
-    if worktree.branch != *branch {
+    if worktree.branch != selected.branch {
       bail!(
         "cannot remove worktree `{branch}`: `{}` is now on `{}`",
         path.display(),
@@ -153,25 +159,25 @@ fn remove_directories(
   let paths = selected
     .iter()
     .enumerate()
-    .map(|(index, (branch, path))| RemovalPath::new(branch, path, index))
+    .map(|(index, worktree)| RemovalPath::new(worktree, index))
     .collect::<Result<Vec<_>>>()?;
 
   let mut removal = Removal { paths: Vec::new() };
 
-  for ((branch, path), removal_path) in selected.iter().zip(paths) {
+  for (worktree, removal_path) in selected.iter().zip(paths) {
     if fs::rename(&removal_path.path, &removal_path.trash_path).is_ok() {
       removal.paths.push(removal_path);
     } else {
       let result = Command::new("git")
         .current_dir(head_path)
-        .args(["worktree", "remove", "--force", path])
+        .args(["worktree", "remove", "--force", &worktree.path])
         .stderr(Stdio::piped())
         .output()?;
 
       if !result.status.success() {
         bail!(
           "failed to remove worktree `{}`: {}",
-          branch,
+          worktree.branch,
           str::from_utf8(&result.stderr)?.trim()
         );
       }
@@ -208,7 +214,7 @@ fn remove_directories(
 
 #[cfg(unix)]
 fn remove_worktrees(
-  selected: &[(String, String)],
+  selected: &[&Worktree],
   head_path: &str,
   current_dir: &Path,
 ) -> Result {
@@ -236,7 +242,7 @@ fn remove_worktrees(
 
   if selected
     .iter()
-    .any(|(_, path)| current_dir.starts_with(path))
+    .any(|worktree| current_dir.starts_with(&worktree.path))
     && !current_dir.is_dir()
   {
     println!("{head_path}");
@@ -244,15 +250,17 @@ fn remove_worktrees(
 
   result?;
 
-  for (branch, path) in selected {
+  for worktree in selected {
     eprintln!(
       "{} worktree {} at {}",
       style.apply(style::GREEN, "removed"),
-      style.apply(style::BOLD, branch),
-      style.apply(style::CYAN, path),
+      style.apply(style::BOLD, &worktree.branch),
+      style.apply(style::CYAN, &worktree.path),
     );
 
-    if branch != "(detached)" && branches.contains(&branch.as_str()) {
+    if let Branch::Named(branch) = &worktree.branch
+      && branches.contains(&branch.as_str())
+    {
       let result = Command::new("git")
         .current_dir(head_path)
         .args(["branch", "-D", branch])
@@ -295,7 +303,9 @@ pub(crate) fn run() -> Result {
     .path;
 
   let items = worktrees
-    .filter(|worktree| !worktree.bare && Path::new(&worktree.path).is_dir())
+    .filter(|worktree| {
+      worktree.branch != Branch::Bare && Path::new(&worktree.path).is_dir()
+    })
     .enumerate()
     .map(|(index, worktree)| {
       Arc::new(Worktree { index, ..worktree }) as Arc<dyn SkimItem>
@@ -327,7 +337,14 @@ pub(crate) fn run() -> Result {
   let selected = output
     .selected_items
     .iter()
-    .map(|item| (item.text().to_string(), item.output().to_string()))
+    .map(|item| {
+      item
+        .item
+        .as_ref()
+        .as_any()
+        .downcast_ref::<Worktree>()
+        .unwrap()
+    })
     .collect::<Vec<_>>();
 
   if selected.is_empty() {

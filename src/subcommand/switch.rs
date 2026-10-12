@@ -9,7 +9,9 @@ pub(crate) fn run() -> Result {
 pub(crate) fn run() -> Result {
   let worktrees = Worktree::list(".")?
     .into_iter()
-    .filter(|worktree| !worktree.bare && Path::new(&worktree.path).is_dir())
+    .filter(|worktree| {
+      worktree.branch != Branch::Bare && Path::new(&worktree.path).is_dir()
+    })
     .collect::<Vec<_>>();
 
   if worktrees.is_empty() {
