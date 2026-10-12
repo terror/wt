@@ -44,6 +44,27 @@ impl Worktree {
 
     Ok(str::from_utf8(&output.stdout)?.trim().to_string())
   }
+
+  pub(crate) fn list(directory: impl AsRef<Path>) -> Result<Vec<Self>> {
+    let output = Command::new("git")
+      .current_dir(directory)
+      .args(["worktree", "list", "--porcelain", "-z"])
+      .stderr(Stdio::piped())
+      .output()?;
+
+    if !output.status.success() {
+      bail!(
+        "failed to list worktrees: {}",
+        str::from_utf8(&output.stderr)?.trim(),
+      );
+    }
+
+    str::from_utf8(&output.stdout)?
+      .split("\0\0")
+      .filter(|block| !block.is_empty())
+      .map(Self::try_from)
+      .collect()
+  }
 }
 
 impl TryFrom<&str> for Worktree {

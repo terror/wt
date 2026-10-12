@@ -115,24 +115,7 @@ fn remove_directories(
   selected: &[(String, String)],
   head_path: &str,
 ) -> Result<Removal> {
-  let output = Command::new("git")
-    .current_dir(head_path)
-    .args(["worktree", "list", "--porcelain", "-z"])
-    .stderr(Stdio::piped())
-    .output()?;
-
-  if !output.status.success() {
-    bail!(
-      "failed to list worktrees: {}",
-      str::from_utf8(&output.stderr)?.trim(),
-    );
-  }
-
-  let worktrees = str::from_utf8(&output.stdout)?
-    .split("\0\0")
-    .filter(|block| !block.is_empty())
-    .map(Worktree::try_from)
-    .collect::<Result<Vec<_>>>()?;
+  let worktrees = Worktree::list(head_path)?;
 
   for (branch, path) in selected {
     let path = Path::new(path);
@@ -304,18 +287,7 @@ pub(crate) fn run() -> Result {
 pub(crate) fn run() -> Result {
   let current_dir = env::current_dir()?;
 
-  let output = Command::new("git")
-    .args(["worktree", "list", "--porcelain", "-z"])
-    .stderr(Stdio::null())
-    .output()?;
-
-  if !output.status.success() {
-    bail!("failed to list worktrees");
-  }
-
-  let mut worktrees = str::from_utf8(&output.stdout)?
-    .split("\0\0")
-    .filter_map(|block| Worktree::try_from(block).ok());
+  let mut worktrees = Worktree::list(&current_dir)?.into_iter();
 
   let head_path = worktrees
     .next()
